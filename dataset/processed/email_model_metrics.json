@@ -1,0 +1,67 @@
+{
+  "dataset": "EPVME malicious emails + Enron Spam ham",
+  "dataset_sources": [
+    {
+      "name": "sunknighteric/EPVME-Dataset",
+      "revision": "f559178dafb015df4e6b35627c495237e6e2c560",
+      "license": "GPL-3.0 repository license; source data includes collected and constructed malicious emails",
+      "raw_eml_samples": 49136,
+      "unique_samples_after_deduplication": 29921
+    },
+    {
+      "name": "MWiechmann/enron_spam_data",
+      "revision": "e73c300263040f84b954e969ac06821c31cff47a",
+      "license": "GPL-3.0 repository license",
+      "ham_samples_in_source": 16545,
+      "unique_samples_after_deduplication": 15590
+    }
+  ],
+  "dataset_sha256": "95221f7f35fc9f480fdc07174cf15e67b5e87427e7526ef121b9cae6be34b5ef",
+  "dataset_form": "public_research_corpora; exact normalized text duplicates removed",
+  "evaluation_type": "cross_corpus_holdout",
+  "accuracy_label": "Cross-corpus holdout accuracy",
+  "synthetic_dataset": false,
+  "samples_per_class": 15590,
+  "samples": 31180,
+  "train_samples": 24944,
+  "test_samples": 6236,
+  "class_distribution": {
+    "0": 15590,
+    "1": 15590
+  },
+  "label_meaning": {
+    "0": "Enron non-spam (ham) proxy",
+    "1": "EPVME malicious"
+  },
+  "split": {
+    "folds": 5,
+    "random_state": 42,
+    "stratified": true,
+    "grouped_by": "case-folded, whitespace-normalized exact subject and body"
+  },
+  "accuracy": 0.99903784477229,
+  "precision": 0.9983984625240231,
+  "recall": 0.9996792815907634,
+  "f1": 0.9990384615384615,
+  "false_positive_rate": 0.001603592046183451,
+  "false_negative_rate": 0.00032071840923669016,
+  "confusion_matrix_labels_0_then_1": [
+    [
+      3113,
+      5
+    ],
+    [
+      1,
+      3117
+    ]
+  ],
+  "skipped_oversize_or_empty_email_files": 55,
+  "skipped_empty_enron_ham_records": 0,
+  "conflicting_exact_texts_removed": 0,
+  "runtime": {
+    "python": "3.14.0",
+    "scikit_learn": "1.9.1"
+  },
+  "trained_at": "2026-10-21T13:56:33.145749+00:00",
+  "limitations": "This is a cross-corpus research benchmark, not current real-world accuracy. EPVME includes constructed attacks and older collected messages; Enron ham is old non-spam mail, not independently verified as phishing-free. Source, time, language, and collection differences can inflate or reduce held-out scores. This near-perfect result is likely driven by source/corpus artifacts and is not evidence of near-perfect phishing detection. Campaign-aware and time-separated evaluation on recent labeled mail is still required."
+}

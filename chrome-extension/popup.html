@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KESHIHBA URL Guard</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">K</span><div><strong>KESHIHBA</strong><small>LINK SECURITY</small></div></div>
+        <span class="live-label"><i></i> Local scan</span>
+      </header>
+      <section id="state" class="state">
+        <p>Checking active tab...</p>
+      </section>
+      <label for="target-url">PAGE OR LINK</label>
+      <input id="target-url" type="url" inputmode="url" placeholder="https://example.com" />
+      <div class="actions">
+        <button id="scan" type="button"><span>Scan URL</span><b aria-hidden="true">→</b></button>
+        <a id="dashboard" href="http://127.0.0.1:5173/#/website-scanner" target="_blank">Open dashboard</a>
+      </div>
+      <footer>URL checked by your local backend. Limited page signals stay on this device.</footer>
+    </main>
+    <script src="risk-utils.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

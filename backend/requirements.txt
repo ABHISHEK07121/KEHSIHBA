@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+pyarrow
+requests
+scikit-learn
+sqlalchemy
+python-multipart
+pillow
+pytesseract
+pypdf
+python-docx
+httpx2

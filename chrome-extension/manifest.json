@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "KESHIHBA URL Guard",
+  "version": "0.2.0",
+  "description": "Automatically check active page URLs for phishing, malicious links, and impersonation risks.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Scan with KESHIHBA"
+  },
+  "permissions": ["activeTab", "tabs", "notifications", "scripting"],
+  "host_permissions": ["http://127.0.0.1:8000/*", "http://localhost:8000/*", "http://*/*", "https://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["page-inspector.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

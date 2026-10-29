@@ -1,0 +1,46 @@
+{
+  "dataset": "flwrlabs/fed-phishing-urls",
+  "dataset_revision": "941d45362de147c316b05d6b3b00e0aefec33448",
+  "license": "Apache-2.0",
+  "dataset_form": "raw_source_snapshot_not_manually_cleaned",
+  "train_sha256": "b2fbd37d31c3981f2fde21edd06f0d5d9758cd10ee605e68daf5e09b75dc00e3",
+  "test_sha256": "fa9ee5b47841fea613de37125fc8021779ede1ebfd61aad2fe114d27decb2747",
+  "train_samples": 300012,
+  "supplemental_benign_samples": 13,
+  "supplemental_benign_samples_used": 12,
+  "excluded_train_test_overlap_urls": 4733,
+  "test_samples": 60000,
+  "train_row_limit": 300000,
+  "test_row_limit": 60000,
+  "label_meaning": {
+    "0": "benign",
+    "1": "phishing_or_malicious"
+  },
+  "split": "official dataset train/test parquet files; exact URLs found in the full test split are excluded from fitting",
+  "accuracy": 0.9009833333333334,
+  "precision": 0.9185922157047023,
+  "recall": 0.8920815761314282,
+  "f1": 0.905142820647922,
+  "false_positive_rate": 0.08899596117055197,
+  "false_negative_rate": 0.10791842386857178,
+  "confusion_matrix_labels_0_then_1": [
+    [
+      25714,
+      2512
+    ],
+    [
+      3429,
+      28345
+    ]
+  ],
+  "runtime": {
+    "python": "3.14.0",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.3",
+    "pyarrow": "25.0.1",
+    "joblib": "1.6.0"
+  },
+  "trained_at": "2026-10-13T07:42:34.043807+00:00",
+  "normalization": "Train and test URLs are normalized with the same scheme/host/path policy used by live scans to reduce scheme-format leakage.",
+  "limitations": "Exact URLs shared with the full official test split are excluded from training. Shared domains, campaigns, redirects, and near-duplicates may remain; derived public URL datasets can contain stale or inactive URLs, so held-out scores do not establish current threat coverage. URLhaus data is malware IOC reputation data, not phishing training data."
+}

@@ -1,0 +1,595 @@
+KESHIHBA: AN EXPLAINABLE MULTI-INPUT PHISHING TRIAGE PROTOTYPE
+FOR EMAIL, URL, AND SCREENSHOT ANALYSIS
+
+Research-paper preparation draft
+Project evidence reviewed: 13 October 2026
+
+Author(s): [Add the actual author name(s)]
+Researcher ID / ORCID: [Add only the author's actual ID, if applicable]
+Institution: [Add institution, or state "Independent project" if accurate]
+Department / course: [Complete if applicable]
+Supervisor: [Complete if applicable]
+Contact: [Add a contact address approved for publication]
+
+IMPORTANT AUTHOR NOTE
+
+This document is a paper-preparation draft, not a claim of independent
+peer-reviewed validation. Replace the bracketed author details, confirm all
+citations and dataset terms, follow your institution's formatting rules, and
+report the exact code revision and environment used in the final experiment.
+No researcher ID, ORCID, institution, or named research team was verified in
+the project files; do not invent these details.
+
+
+ABSTRACT
+
+Phishing messages and malicious URLs can expose users to credential theft,
+financial scams, and malware. This paper describes KESHIHBA, a prototype for
+triaging suspicious email text, URLs, and screenshot-based messages. The
+system combines deterministic, explainable indicators with local
+character n-gram classifiers and optional URL threat-intelligence lookups.
+For screenshot input, optical character recognition (OCR) extracts text that
+is passed to the email-analysis pipeline; the system is not an image-level
+phishing classifier. In saved offline evaluation artifacts, an email
+classifier evaluated on a 120-message grouped holdout from a small synthetic
+bilingual corpus reported 100.00% accuracy, precision, recall, and F1. A URL
+classifier evaluated on 60,000 rows from an official test split reported
+90.10% accuracy, 91.86% precision, 89.21% recall, and 90.51% F1. These results
+are dataset- and split-specific. The email corpus is small and synthetic;
+the URL corpus has exact train/test overlaps in its full source files and may
+contain stale examples. The results do not establish real-world detection
+effectiveness. KESHIHBA is therefore presented as an explainable
+phishing-triage prototype, not a guarantee of safety or a newly invented
+classification algorithm.
+
+Keywords: phishing detection, email security, malicious URLs, explainable
+analysis, character n-grams, OCR, threat intelligence, triage system
+
+
+1. INTRODUCTION
+
+Phishing attempts can arrive as email, links, or images of messages. Users
+must decide whether to trust a message while attackers can change wording,
+domains, and delivery tactics. A single indicator, such as HTTPS or the
+absence of a reputation-feed match, is insufficient to establish that a
+destination is safe. A useful triage tool should combine relevant evidence,
+explain what it observed, and make uncertainty visible.
+
+KESHIHBA is a software prototype that accepts email text or supported
+documents, URLs, and screenshots. It combines rule-based evidence, local
+email and URL models, and configurable URL reputation sources. Results
+include a classification, risk score, indicators, and a suggested next
+action. The email and screenshot workflows can expose links for separate URL
+analysis.
+
+The research objective is to implement and document an explainable,
+multi-input phishing-triage workflow and report preliminary offline
+classifier results with their data and evaluation limitations. This work
+does not claim to prevent phishing attacks, establish a novel classification
+algorithm, or demonstrate that the prototype is effective in operational
+deployment.
+
+Research questions:
+
+RQ1. How can email, URL, and OCR-derived screenshot inputs be handled in one
+triage workflow that exposes evidence to users?
+
+RQ2. What offline performance do the project's email and URL classifiers
+achieve under their documented dataset-specific evaluation procedures?
+
+RQ3. What limitations in dataset composition, leakage risk, evaluation
+scope, and implementation constrain conclusions about real-world use?
+
+
+2. PROBLEM DEFINITION AND SCOPE
+
+The system addresses user-facing triage of potentially suspicious content.
+It analyzes selected text and URL characteristics and, where configured,
+checks current URL reputation sources. Its outputs are advisory signals.
+They are not a forensic determination, a calibrated probability of harm, or
+a substitute for organizational security procedures.
+
+In scope:
+- Pasted email subject/body and supported email or document uploads.
+- HTTP/HTTPS URL structure, selected domain signals, and reputation checks.
+- Screenshot text extraction with OCR followed by email-style text analysis.
+- Local text classifiers, rule-based indicators, and evidence-oriented
+  results.
+- A web dashboard, optional account-scoped scan history, and a Chrome
+  extension that submits the active page URL to the backend.
+
+Out of scope or not established by the current evidence:
+- Full webpage rendering or page-content analysis.
+- Email protocol authentication verification (SPF, DKIM, or DMARC) from
+  received headers.
+- Attachment malware scanning, sandboxing, or macro analysis.
+- QR-code detection, visual-layout classification, or image-native
+  machine-learning detection.
+- A user study, deployment study, calibrated risk probability, or measured
+  reduction in successful attacks.
+- A claim that a Safe result proves that the input is harmless.
+
+
+3. CONTRIBUTIONS AND POSITIONING
+
+The contribution is the implemented prototype workflow and its documented
+component evaluation, not a new machine-learning algorithm. Its
+implementation brings together:
+
+C1. Email, URL, and OCR-derived screenshot input paths in one application.
+C2. Deterministic rules, local character n-gram classifiers, and optional
+    reputation evidence in common scan-result workflows.
+C3. Human-readable indicators, score breakdown information, and
+    recommendations intended to make triage evidence inspectable.
+C4. Handoff of links extracted from email or screenshot text to URL analysis.
+C5. Dataset provenance, audit artifacts, and explicit limitations alongside
+    saved model metrics.
+
+Suggested novelty statement:
+
+"This work presents an implemented phishing-triage prototype that integrates
+email, URL, and OCR-derived screenshot inputs with explainable rules, local
+text classifiers, and optional reputation sources. Its contribution is the
+documented integration and user-facing workflow. It does not introduce a new
+classification algorithm or claim priority over existing tools."
+
+Any stronger novelty or research-gap claim requires a documented literature
+search and a direct, fair comparison with related systems.
+
+
+4. RELATED WORK
+
+Learning-based phishing-email classification has been explored by Fette,
+Sadeh, and Tomasic [1]. Abu-Nimeh et al. compared machine-learning techniques
+for phishing detection [2]. URL-oriented work includes machine-learning
+methods using URL information [3] and learned URL representations for
+malicious-URL detection [4]. Tesseract provides an established OCR engine
+used in the screenshot text-extraction path [5].
+
+These publications offer context, not directly comparable baselines for
+KESHIHBA. Their datasets, threat periods, labels, features, and test protocols
+are not shown to match the datasets and procedures reported here. Before
+submission, expand this section through a systematic search of relevant
+scholarly databases. Record search terms, dates, inclusion criteria, and
+comparison criteria; verify every bibliographic detail and DOI.
+
+
+5. SYSTEM ARCHITECTURE
+
+The prototype uses a React/Vite frontend and a FastAPI backend. Local
+scikit-learn models are stored as joblib artifacts. SQLite supports scan
+history metadata. The Chrome extension is a separate user interface for
+submitting the active HTTP/HTTPS page URL to the backend.
+
+Email flow:
+1. Receive pasted email content or parse a supported uploaded file.
+2. Extract HTTP/HTTPS URLs from the body.
+3. Apply configured content, sender, scam/spam, and impersonation rules.
+4. Analyze extracted links separately with the URL analyzer.
+5. Add the local email-model signal when the model is available and its
+   phishing probability meets the configured 85% threshold.
+6. Return verdict, risk score, reasons, extracted URLs, and recommendation.
+
+URL flow:
+1. Normalize and validate the submitted HTTP/HTTPS URL.
+2. Examine selected URL and hostname characteristics.
+3. Run the local URL model when the saved model is available.
+4. Consult available threat feeds and optional third-party reputation
+   services.
+5. Use selected domain-intelligence checks, including DNS, TLS, and
+   registration-age information, when available.
+6. Return a verdict, risk score, evidence, warnings, and recommendation.
+
+The URL endpoint does not browse or render the submitted webpage. This
+should not be summarized as "no network interaction": selected domain
+checks can perform DNS queries, TLS connections to a publicly resolved
+destination, RDAP requests, and external reputation lookups. Optional
+external providers may receive submitted URL information; this should be
+disclosed to users and considered in privacy decisions.
+
+Screenshot flow:
+1. Receive an uploaded image.
+2. Convert the image to grayscale and attempt OCR using Tesseract.
+3. Pass extracted text to the email analyzer and expose URLs found in that
+   text.
+4. If OCR fails or finds no readable text, return an explicit inconclusive/
+   suspicious-style response and advise manual review.
+
+The screenshot pipeline is OCR plus text analysis, not visual page
+classification. OCR can omit, misread, or reorder text.
+
+Key API routes include GET /health, POST /api/analyze/email, POST
+/api/analyze/url, POST /api/analyze/urls, POST /api/analyze/screenshot,
+GET /api/models, and GET /api/intelligence/status. The project README
+documents additional authentication, history, and tool endpoints.
+
+
+6. DETECTION METHODS
+
+6.1 Email rules
+
+The email analyzer uses configured phrases for urgency, account pressure,
+credential-related language, payment requests, common financial scams, and
+promotional spam. It also uses a limited sender/brand mismatch heuristic and
+checks extracted URLs. The phrase lists are hand-authored rules; they do not
+constitute a comprehensive linguistic model. Spam and scam scoring are
+rule-based, not separately trained classifiers.
+
+Email risk scoring is a heuristic weighted total capped at 100. Configured
+content, sender, impersonation, URL, reputation, and model indicators may
+contribute. The result's risk score is not a calibrated probability. The
+email model contributes a phishing signal only at a predicted phishing
+probability of at least 85%. That threshold is an implementation setting,
+not a validated optimal operating point.
+
+6.2 URL rules and reputation
+
+The URL analyzer considers selected characteristics including URL length,
+hostname length and subdomains, IP-address hosts, HTTP versus HTTPS,
+encoding, unusual delimiters, recognized shorteners, suspicious account or
+payment terms, and possible brand lookalikes. Domain-intelligence checks
+may include DNS records, TLS certificate information, and registration age.
+These signals are evidence, not definitive proof. HTTPS alone is not a
+trustworthiness signal.
+
+The project supports OpenPhish Community feed matching and optional URLhaus
+Recent matching when URLHAUS_AUTH_KEY is configured. VirusTotal URL
+reputation is optional and requires VIRUSTOTAL_API_KEY. Unavailable,
+disabled, not-found, or failed lookups must not be interpreted as clean
+results. A threat-feed match is current only relative to that provider's
+feed and refresh status.
+
+6.3 Local email classifier
+
+The email model uses a scikit-learn pipeline with:
+- TfidfVectorizer using character-within-word n-grams of lengths 3–5;
+- min_df=2, max_features=100,000, and sublinear term frequency;
+- LogisticRegression with class_weight="balanced", max_iter=2,000, and
+  random_state=42.
+
+The training script groups records by case-folded, whitespace-normalized
+exact message text and uses the first split from StratifiedGroupKFold with
+five folds, shuffling, and random_state=42. It evaluates that partition,
+then fits the saved production artifact on all 600 records. Exact duplicate
+text is thereby kept in one partition, but semantic or near-duplicate
+leakage is not excluded.
+
+6.4 Local URL classifier
+
+The URL model uses a character HashingVectorizer with 3–5 character
+n-grams, 2^20 features, lowercase conversion, L2 normalization, and
+alternate_sign=False. It trains an SGDClassifier configured with
+loss="log_loss", alpha=1e-5, and random_state=42, using incremental
+mini-batches.
+
+The training process caps the source training data at 300,000 rows and the
+test evaluation at 60,000 rows. Twelve supplemental benign URL examples
+were used in the recorded run. It excludes exact normalized URLs found in
+the full official test split when encountered in the training region used
+for fitting. This is not a domain-, campaign-, or time-separated
+evaluation.
+
+6.5 Verdict semantics
+
+The application presents categories such as Safe, Suspicious, High Risk,
+Malicious, and Unknown. These are triage labels produced by the combined
+application logic, not labels directly measured by the offline model
+experiment. In particular, model probability and overall evidence score
+are separate concepts. The URL analyzer may return Unknown where a high
+model score lacks corroborating structural or reputation evidence. A Safe
+verdict means only that configured checks did not cross their configured
+thresholds; it does not guarantee safety.
+
+
+7. DATASETS AND EXPERIMENTAL PROCEDURE
+
+The project keeps pinned source snapshots in dataset/raw/. Training scripts
+perform reproducible loading, label and field selection, normalization,
+vectorization, and split-specific operations; the source files are not
+manually cleaned. Dataset and run artifacts are described in
+dataset/README.md and dataset/processed/.
+
+7.1 Email dataset
+
+Source: Febriyansyah/phishing-emails-multilingual, Hugging Face revision
+81de6750a6658efaa1c0ae5a58acfe2b183d968c.
+Recorded license: MIT.
+Size: 600 messages; 300 benign and 300 phishing.
+Labels: 0 = benign; 1 = phishing.
+Recorded provenance: synthetic educational bilingual English/Indonesian
+dataset.
+Saved source SHA-256:
+55ce9cf197b28ebafcb46073da0213fcca1626e8a0bfb530ce61b2d2e3407a93.
+
+The saved evaluation uses 480 training and 120 test messages. The partition
+is one stratified grouped split from a five-fold StratifiedGroupKFold
+procedure, with exact normalized message text used as the grouping key.
+This is one held-out partition, not a report of mean cross-validation
+performance. The dataset audit found 77 exact normalized duplicate-text
+groups comprising 209 duplicate rows and no conflicting labels for those
+duplicate texts. This check does not find semantic paraphrases.
+
+7.2 URL dataset
+
+Source: flwrlabs/fed-phishing-urls, Hugging Face revision
+941d45362de147c316b05d6b3b00e0aefec33448.
+Recorded license: Apache-2.0.
+Official source splits: 1,019,074 training rows and 113,232 test rows.
+Labels: 0 = benign; 1 = phishing_or_malicious.
+Saved train SHA-256:
+b2fbd37d31c3981f2fde21edd06f0d5d9758cd10ee605e68daf5e09b75dc00e3.
+Saved test SHA-256:
+fa9ee5b47841fea613de37125fc8021779ede1ebfd61aad2fe114d27decb2747.
+
+The recorded model run fitted on 300,000 dataset training rows plus 12
+supplemental benign examples and evaluated on 60,000 rows from the official
+test file. A total of 4,733 exact normalized URLs encountered in the capped
+training region were excluded because they appeared in the full official
+test split. This does not eliminate all raw-source overlap: the audit
+reports 14,073 unique exact normalized URLs overlapping the full official
+train and test splits (14,154 overlapping rows). It also reports exact
+duplicates within the train split (62,808 groups, 65,155 duplicate rows)
+and test split (848 groups, 853 duplicate rows). Exact URL checks do not
+detect shared domains, campaigns, redirects, or near-duplicate paths.
+
+The dataset is derived from public URL sources and may include stale or
+inactive URLs. A recent dataset revision does not establish that each URL
+is recent. Never visit raw dataset URLs to validate them.
+
+7.3 Evaluation protocol
+
+The reported metrics are accuracy, precision, recall, F1-score,
+false-positive rate, false-negative rate, and confusion matrix. The saved
+confusion matrices use class order [0, 1], where 0 is benign and 1 is
+phishing or phishing/malicious. The saved JSON files record runtime
+versions and dataset provenance.
+
+The metrics evaluate the individual offline classifiers, not the complete
+rule-plus-model-plus-reputation pipeline. There is no saved system-level
+confusion matrix, calibration evaluation, ablation study, independent
+deployment test, user study, or measured latency benchmark. Do not infer
+these results from the classifier metrics.
+
+
+8. RESULTS
+
+The following values are transcribed from the saved files
+dataset/processed/email_model_metrics.json and
+dataset/processed/url_model_metrics.json. They describe the saved runs,
+not an independent retraining performed for this paper draft.
+
+Table 1. Email classifier on its 120-message held-out partition.
+
+Metric                         Result
+Accuracy                       1.0000 (100.00%)
+Precision                      1.0000 (100.00%)
+Recall                         1.0000 (100.00%)
+F1-score                       1.0000 (100.00%)
+False-positive rate            0.0000 (0.00%)
+False-negative rate            0.0000 (0.00%)
+Test examples                  120
+
+Email confusion matrix, rows = actual [benign, phishing] and columns =
+predicted [benign, phishing]:
+
+                         Predicted benign   Predicted phishing
+Actual benign                  60                   0
+Actual phishing                 0                  60
+
+The perfect score applies only to this small synthetic holdout. It must not
+be described as perfect real-world detection. Synthetic construction,
+limited sample size, and stylistic regularities can make the classification
+task easier than live email. Independent, recent, representative data are
+needed to assess generalization.
+
+Table 2. URL classifier on the 60,000-row evaluation subset.
+
+Metric                         Result
+Accuracy                       0.9010 (90.10%)
+Precision                      0.9186 (91.86%)
+Recall                         0.8921 (89.21%)
+F1-score                       0.9051 (90.51%)
+False-positive rate            0.0890 (8.90%)
+False-negative rate            0.1079 (10.79%)
+Test examples                  60,000
+
+URL confusion matrix, rows = actual [benign, phishing/malicious] and
+columns = predicted [benign, phishing/malicious]:
+
+                         Predicted benign   Predicted positive
+Actual benign                25,714                2,512
+Actual positive               3,429               28,345
+
+On this evaluated subset, the model correctly classified 25,714 benign
+examples and 28,345 positive examples. It incorrectly marked 2,512 benign
+examples as positive and missed 3,429 positive examples. Threshold choice
+and operating costs should be evaluated for the intended application; the
+saved result alone does not establish that the threshold is appropriate.
+
+Reproducibility caveat: the metrics artifacts report scikit-learn 1.9.1,
+while the dataset README notes verification on 13 October 2026 with
+scikit-learn 1.8.0 and model-persistence warnings. Final paper results
+should be regenerated in one pinned environment with matching runtime,
+training code, dataset snapshots, model artifact, and metrics.
+
+
+9. DISCUSSION
+
+The implementation demonstrates that multiple input types and evidence
+sources can be connected in one working triage workflow. The rule-based
+signals are inspectable, while the local models provide statistical scores
+based on character patterns. URL reputation can add evidence for known
+indicators, and OCR allows text in screenshots to enter the text-analysis
+path.
+
+The experiments provide preliminary component-level evidence only. The
+email score is especially limited by the synthetic 600-message corpus and
+small held-out set. URL performance is stronger evidence of behavior on a
+larger evaluation subset, but the source audit identifies duplicates and
+train/test overlap, and the evaluation is not campaign-, domain-, or
+time-separated. Both datasets can differ substantially from future
+operational traffic.
+
+The integrated system itself has not been evaluated against a common labeled
+end-to-end test set. Consequently, this draft cannot establish that adding
+rules, feeds, OCR, or multiple input paths improves detection compared with
+any component alone. A fair ablation study would evaluate email-only,
+URL-only, rules-only, model-only, reputation-only, and combined settings on
+the same independent examples.
+
+
+10. LIMITATIONS AND THREATS TO VALIDITY
+
+Dataset validity:
+- Email training data are synthetic, bilingual, and small.
+- URL examples may be stale or inactive; source provenance and labeling
+  reflect the dataset publishers.
+- Exact duplicates and source-split overlaps are documented, but semantic,
+  domain, campaign, and temporal leakage have not been ruled out.
+- The saved URL evaluation covers 60,000 rows, not all 113,232 official
+  test rows.
+
+Measurement validity:
+- Metrics describe offline classifier predictions, not final application
+  verdicts.
+- The overall heuristic risk score is not calibrated as a probability.
+- No confidence intervals, calibration curves, threshold sweep, latency,
+  ablation, user study, or operational deployment study is present in the
+  saved results.
+- A test split from the same public dataset source is not independent
+  evidence of effectiveness on current threats.
+
+Implementation validity:
+- Keyword rules cover a limited set of language and may miss novel,
+  contextual, multilingual, or obfuscated attacks.
+- OCR may fail or misread text. The screenshot method does not analyze
+  visual layout or QR codes.
+- Reputation-feed absence is not proof of safety; third-party lookups can be
+  unavailable, rate-limited, or privacy-sensitive.
+- URL domain checks are not equivalent to webpage-content inspection.
+- The classifier model probability and hand-weighted system risk score are
+  different quantities.
+
+External validity:
+- Results may not generalize across time, languages, organizations,
+  platforms, URL campaigns, or real-world class prevalence.
+- The evaluation does not estimate user behavior, warning fatigue, or
+  reduction in successful phishing.
+
+
+11. ETHICS, PRIVACY, AND SAFE USE
+
+Treat all system outputs as advisory. Do not enter credentials or make
+financial decisions based solely on a classification. Avoid submitting
+confidential messages or sensitive URLs unless authorized and necessary.
+Review which scan metadata are retained and apply appropriate access,
+retention, and deletion controls.
+
+When optional external intelligence services are enabled, submitted URL
+information may be sent to those providers. Disclose this behavior and
+follow provider terms. Keep API keys in backend-only configuration. Do not
+open URLs in the dataset or access suspected malicious destinations outside
+an authorized, controlled research environment. Respect dataset licenses,
+provider terms, and the privacy expectations of message owners.
+
+
+12. CONCLUSION
+
+KESHIHBA is an explainable phishing-triage prototype that integrates email,
+URL, and OCR-derived screenshot text workflows with rule-based evidence,
+local character n-gram classifiers, and optional URL reputation checks. The
+saved offline results report 100.00% email accuracy on a 120-sample
+synthetic held-out partition and 90.10% URL accuracy on a 60,000-row test
+subset. The accompanying audit shows why these results must be interpreted
+cautiously: the email dataset is synthetic and small, while the URL source
+contains duplicate and overlapping records and may be stale. The current
+evidence supports describing the project as a prototype and its model
+results as preliminary; it does not establish real-world effectiveness or
+guaranteed protection.
+
+
+13. RECOMMENDED NEXT EXPERIMENTS
+
+1. Pin one software environment; rerun dataset audits and training; archive
+   code revision, dataset hashes, dependency versions, commands, and model
+   artifacts together.
+2. Evaluate on recent, independently collected, licensed data. Prefer
+   time-based and source-, domain-, or campaign-separated partitions.
+3. Report confidence intervals, per-class measures, precision-recall
+   curves, threshold trade-offs, calibration, and latency.
+4. Build an end-to-end labeled test set for the integrated application,
+   including OCR and embedded links.
+5. Conduct ablation experiments to measure the incremental contribution of
+   rules, models, and reputation sources under a common test protocol.
+6. Test OCR quality across image quality, layout, and language conditions.
+7. Document the handling of third-party lookups, sensitive URLs, scan
+   history, retention, and model/service unavailability.
+8. Conduct a documented literature review and direct feature/performance
+   comparison before making research-gap or novelty claims.
+
+
+REFERENCES
+
+[1] A. Fette, N. Sadeh, and A. Tomasic, "Learning to Detect Phishing Emails,"
+in Proceedings of the 16th International Conference on World Wide Web
+(WWW '07), 2007, pp. 649-656. DOI: 10.1145/1242572.1242660.
+
+[2] S. Abu-Nimeh, D. Nappa, X. Wang, and S. Nair, "A Comparison of Machine
+Learning Techniques for Phishing Detection," in Proceedings of the Anti-
+Phishing Working Groups 2nd Annual eCrime Researchers Summit, 2007.
+Verify final publisher bibliographic details before submission.
+
+[3] O. K. Sahingoz, E. Buber, O. Demir, and B. Diri, "Machine Learning Based
+Phishing Detection from URLs," Expert Systems with Applications, vol. 117,
+pp. 345-357, 2019. DOI: 10.1016/j.eswa.2018.09.029.
+
+[4] H. Le, Q. Pham, D. Sahoo, and S. C. H. Hoi, "URLNet: Learning a URL
+Representation with Deep Learning for Malicious URL Detection," 2018.
+arXiv:1802.03162. DOI: 10.48550/arXiv.1802.03162.
+
+[5] R. Smith, "An Overview of the Tesseract OCR Engine," in Proceedings of
+the Ninth International Conference on Document Analysis and Recognition
+(ICDAR 2007), vol. 2, 2007, pp. 629-633. DOI: 10.1109/ICDAR.2007.4376991.
+
+[6] Febriyansyah, "phishing-emails-multilingual," Hugging Face dataset,
+revision 81de6750a6658efaa1c0ae5a58acfe2b183d968c. Project-recorded
+license: MIT. https://huggingface.co/datasets/Febriyansyah/phishing-emails-multilingual
+
+[7] flwrlabs, "fed-phishing-urls," Hugging Face dataset, revision
+941d45362de147c316b05d6b3b00e0aefec33448. Project-recorded license:
+Apache-2.0. https://huggingface.co/datasets/flwrlabs/fed-phishing-urls
+
+[8] OpenPhish, "OpenPhish Community Feed." https://openphish.com/ .
+Terms: https://openphish.com/terms.html . Confirm access date and applicable
+terms at submission.
+
+[9] abuse.ch, "URLhaus API." https://urlhaus.abuse.ch/api/ . Confirm access
+date and applicable terms at submission.
+
+[10] VirusTotal, "URL information API." https://docs.virustotal.com/reference/url-info
+Confirm access date and applicable terms at submission.
+
+[11] scikit-learn developers, scikit-learn documentation.
+https://scikit-learn.org/stable/ . Cite the exact version used for final
+training and evaluation.
+
+
+AUTHOR SUBMISSION CHECKLIST
+
+[ ] Replace all author, affiliation, researcher ID/ORCID, and contact fields
+    with genuine details or remove fields that do not apply.
+[ ] Confirm the institution's required paper format and AI-assistance
+    disclosure policy.
+[ ] Verify references, dataset authorship, dataset revisions, licenses,
+    access dates, and provider terms.
+[ ] Rerun audits and model training in a single pinned environment before
+    treating saved metrics as final paper results.
+[ ] Make clear that the email metrics are from one 120-message holdout and
+    the URL metrics are from 60,000 rows of an official test file.
+[ ] Do not claim perfect real-world detection, calibrated risk probability,
+    system-level effectiveness, global novelty, or prevention of attacks.
+[ ] Add independent-data evaluation, system-level metrics, and ablation
+    results before making claims about generalization or combined-system
+    improvement.
+[ ] Ensure every statement about implemented features is supported by the
+    current code and the experiment actually performed.

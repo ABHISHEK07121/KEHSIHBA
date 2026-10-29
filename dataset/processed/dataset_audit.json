@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-10-21T15:37:56.182390+00:00",
+  "dataset_form": "raw_source_snapshot_not_manually_cleaned",
+  "runtime": {
+    "python": "3.14.0",
+    "pyarrow": "25.0.1"
+  },
+  "email": {
+    "path": "dataset\\raw\\phishing_email_multilingual.csv",
+    "rows": 600,
+    "class_distribution": {
+      "0": 300,
+      "1": 300
+    },
+    "empty_text_rows": 0,
+    "exact_duplicate_text_groups": 77,
+    "exact_duplicate_text_rows": 209,
+    "duplicate_text_label_conflicts": 0,
+    "notes": [
+      "This checks exact normalized text duplicates only.",
+      "It does not detect semantic paraphrases or near-duplicates."
+    ]
+  },
+  "url": {
+    "train_path": "dataset\\raw\\fed_phishing_urls_train.parquet",
+    "test_path": "dataset\\raw\\fed_phishing_urls_test.parquet",
+    "train_rows": 1019074,
+    "test_rows": 113232,
+    "train_class_distribution": {
+      "0": 507237,
+      "1": 511837
+    },
+    "test_class_distribution": {
+      "0": 56357,
+      "1": 56875
+    },
+    "train_empty_url_rows": 0,
+    "test_empty_url_rows": 0,
+    "train_exact_duplicate_url_groups": 62808,
+    "train_exact_duplicate_url_rows": 65155,
+    "test_exact_duplicate_url_groups": 848,
+    "test_exact_duplicate_url_rows": 853,
+    "exact_train_test_overlap_urls": 14073,
+    "exact_train_test_overlap_rows": 14154,
+    "notes": [
+      "URLs use the training normalization policy before exact train/test overlap is counted.",
+      "It does not detect shared domains, campaigns, redirects, or near-duplicate paths."
+    ]
+  },
+  "limitations": [
+    "Exact duplicate checks are a first leakage screen, not proof that leakage is absent.",
+    "Campaign-aware, domain-aware, source-separated, and time-based validation should be added for final research claims."
+  ]
+}
